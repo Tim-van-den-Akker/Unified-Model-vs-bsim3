@@ -1,9 +1,11 @@
+from ast import arg
 from itertools import count
 from sqlite3 import Row
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from math import sqrt
+import threading as th
 
 def nmosid(vd, vg, vt0, vdsat, kprime, lmbda):
 
@@ -48,75 +50,83 @@ def nmosid(vd, vg, vt0, vdsat, kprime, lmbda):
 
     return id
 
-data = pd.read_excel('LTspicedata.xls')
+def main(threadvt0, threadvdsat, threadlambda, threadkprime):
+    data = pd.read_excel('LTspicedata.xls')
 
-arr = np.array([0, 0, 0, 0, 0, 0])
-unifiedarr = np.array([0, 0, 0, 0, 0, 0])
+    arr = np.array([0, 0, 0, 0, 0, 0])
+    unifiedarr = np.array([0, 0, 0, 0, 0, 0])
 
-length = 901
-i = 1
-while i < length:
-    row = np.array([data["vds"][i+1], data["Id(M1)"][1 + i], data["Id(M1)"][1 + i + (length+1)], data["Id(M1)"][1 + i + 2*(length+1)], data["Id(M1)"][1 + i + 3*(length+1)], data["Id(M1)"][1 + i + 4*(length+1)]])
-    arr = np.vstack([arr, row])
-    i += 1
+    length = 901
+    i = 1
+    while i < length:
+        row = np.array([data["vds"][i+1], data["Id(M1)"][1 + i], data["Id(M1)"][1 + i + (length+1)], data["Id(M1)"][1 + i + 2*(length+1)], data["Id(M1)"][1 + i + 3*(length+1)], data["Id(M1)"][1 + i + 4*(length+1)]])
+        arr = np.vstack([arr, row])
+        i += 1
 
-global min_error 
-min_error = 9999999999
-global error
+    global min_error 
+    min_error = 9999999999
+    global error
 
 
 
-global min_kprime
-global min_lambda
-global min_vt0
-global min_vdsat
-t_vt0 = 0.20
-while t_vt0 < 0.24:
-    t_vdsat = 0.45
-    while t_vdsat < 0.48:
-        t_lambda = 0.2
-        while t_lambda < 0.250:
-            t_kprime = 0.000156
-            while t_kprime < 0.000163:
-                i = 1
-                globalerror = []
-                globalerror.clear()
-                while i < len(arr):
-                    vd = arr[i][0]
-                    error = 0
-                    # print("nmosid ", nmosid(vd, 0.6, t_vt0, t_vdsat, t_kprime, t_lambda), "arr[", i, "][1]", arr[i][1], "error ", error)
-                    error += abs(nmosid(vd, 0.6, t_vt0, t_vdsat, t_kprime, t_lambda) - arr[i][1])
-                    # print("nmosid ", nmosid(vd, 0.9, t_vt0, t_vdsat, t_kprime, t_lambda), "arr[", i, "][1]", arr[i][1], "error ", error)
-                    error += abs(nmosid(vd, 0.9, t_vt0, t_vdsat, t_kprime, t_lambda) - arr[i][2])
-                    # print("nmosid ", nmosid(vd, 1.2, t_vt0, t_vdsat, t_kprime, t_lambda), "arr[", i, "][1]", arr[i][1], "error ", error)
-                    error += abs(nmosid(vd, 1.2, t_vt0, t_vdsat, t_kprime, t_lambda) - arr[i][3])
-                    # print("nmosid ", nmosid(vd, 1.5, t_vt0, t_vdsat, t_kprime, t_lambda), "arr[", i, "][1]", arr[i][1], "error ", error)
-                    error += abs(nmosid(vd, 1.5, t_vt0, t_vdsat, t_kprime, t_lambda) - arr[i][4])
-                    # print("nmosid ", nmosid(vd, 1.8, t_vt0, t_vdsat, t_kprime, t_lambda), "arr[", i, "][1]", arr[i][1], "error ", error)
-                    error += abs(nmosid(vd, 1.8, t_vt0, t_vdsat, t_kprime, t_lambda) - arr[i][5])
-                    # print("nmosid ", nmosid(vd, 1.8, t_vt0, t_vdsat, t_kprime, t_lambda), "arr[", i, "][1]", arr[i][1], "error ", error)
-                    i += 1
-                    # print(error)
-                    globalerror.append(error)
-                    #print(sum(globalerror), t_vt0, t_vdsat, t_lambda)
-                # print(sum(globalerror), t_vt0, t_vdsat, t_lambda)
-                # print(sum(globalerror))
-                #print(globalerror)
-                
-                if(sum(globalerror) < min_error):
-                    min_kprime = t_kprime
-                    min_lambda = t_lambda
-                    min_vt0 = t_vt0
-                    min_vdsat = t_vdsat
-                    min_error = sum(globalerror)
-                    print("min_kprime", min_kprime, "min_lambda", min_lambda,"min_vt0", min_vt0,"min_vdsat", min_vdsat,"min_error", min_error)
-                t_kprime += 0.0000001
-            t_lambda += 0.001
-        t_vdsat += 0.001
-    t_vt0 += 0.001
+    global min_kprime
+    global min_lambda
+    global min_vt0
+    global min_vdsat
+    t_vt0 = threadvt0
+    while t_vt0 < threadvt0 + 0.01:
+        t_vdsat = threadvdsat
+        while t_vdsat < threadvdsat + 0.01:
+            t_lambda = threadlambda
+            while t_lambda < threadlambda+0.01:
+                t_kprime = threadkprime
+                while t_kprime < threadkprime + 0.000001:
+                    i = 1
+                    globalerror = []
+                    globalerror.clear()
+                    while i < len(arr):
+                        vd = arr[i][0]
+                        error = 0
+                        # print("nmosid ", nmosid(vd, 0.6, t_vt0, t_vdsat, t_kprime, t_lambda), "arr[", i, "][1]", arr[i][1], "error ", error)
+                        error += abs(nmosid(vd, 0.6, t_vt0, t_vdsat, t_kprime, t_lambda) - arr[i][1])
+                        # print("nmosid ", nmosid(vd, 0.9, t_vt0, t_vdsat, t_kprime, t_lambda), "arr[", i, "][1]", arr[i][1], "error ", error)
+                        error += abs(nmosid(vd, 0.9, t_vt0, t_vdsat, t_kprime, t_lambda) - arr[i][2])
+                        # print("nmosid ", nmosid(vd, 1.2, t_vt0, t_vdsat, t_kprime, t_lambda), "arr[", i, "][1]", arr[i][1], "error ", error)
+                        error += abs(nmosid(vd, 1.2, t_vt0, t_vdsat, t_kprime, t_lambda) - arr[i][3])
+                        # print("nmosid ", nmosid(vd, 1.5, t_vt0, t_vdsat, t_kprime, t_lambda), "arr[", i, "][1]", arr[i][1], "error ", error)
+                        error += abs(nmosid(vd, 1.5, t_vt0, t_vdsat, t_kprime, t_lambda) - arr[i][4])
+                        # print("nmosid ", nmosid(vd, 1.8, t_vt0, t_vdsat, t_kprime, t_lambda), "arr[", i, "][1]", arr[i][1], "error ", error)
+                        error += abs(nmosid(vd, 1.8, t_vt0, t_vdsat, t_kprime, t_lambda) - arr[i][5])
+                        # print("nmosid ", nmosid(vd, 1.8, t_vt0, t_vdsat, t_kprime, t_lambda), "arr[", i, "][1]", arr[i][1], "error ", error)
+                        i += 1
+                        # print(error)
+                        globalerror.append(error)
+                        #print(sum(globalerror), t_vt0, t_vdsat, t_lambda)
+                    # print(sum(globalerror), t_vt0, t_vdsat, t_lambda)
+                    # print(sum(globalerror))
+                    #print(globalerror)
+                    
+                    if(sum(globalerror) < min_error):
+                        min_kprime = t_kprime
+                        min_lambda = t_lambda
+                        min_vt0 = t_vt0
+                        min_vdsat = t_vdsat
+                        min_error = sum(globalerror)
+                        print("min_kprime", min_kprime, "min_lambda", min_lambda,"min_vt0", min_vt0,"min_vdsat", min_vdsat,"min_error", min_error)
+                    t_kprime += 0.000001
+                t_lambda += 0.001
+            t_vdsat += 0.001
+        t_vt0 += 0.001
 
-print("min_kprime ", min_kprime, "\nmin_lambda", min_lambda, "\nmin_vt0", min_vt0, "\nmin_vdsat", min_vdsat)
+    print("min_kprime ", min_kprime, "\nmin_lambda", min_lambda, "\nmin_vt0", min_vt0, "\nmin_vdsat", min_vdsat)
 
+t1 = th.Thread(target=main, arg=(0.21, 0.45, 0.21, 0.000157))
+t2 = th.Thread(target=main, arg=(0.22, 0.46, 0.22, 0.000158))
+t3 = th.Thread(target=main, arg=(0.23, 0.47, 0.23, 0.000159))
+t4 = th.Thread(target=main, arg=(0.24, 0.48, 0.24, 0.000160))
+t5 = th.Thread(target=main, arg=(0.25, 0.49, 0.25, 0.000161))
+
+t1.start()
 # vd = arr[i][0]
 # row = np.array([vd, nmosid(vd, 0.6), nmosid(vd, 0.9), nmosid(vd, 1.2), nmosid(vd, 1.5), nmosid(vd, 1.8)])
 # unifiedarr = np.vstack([unifiedarr, row])
