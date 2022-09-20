@@ -34,7 +34,7 @@ def nmosid(vd, vg, vt0, vdsat, kprime, lmbda):
     vt = vt0 + gamma * (sqrt (abs((-2 * phy_f + vsb))) - sqrt (abs (-2 * phy_f)))
     
     vgt = vgs - vt
-
+    # print(vgs)
     if vgt < 0:
         return 0 # device is off
 
@@ -63,48 +63,56 @@ while i < length:
 global min_error 
 min_error = 9999999999
 global error
-t_kprime = 0
-t_lambda = 15e-4
-t_vt0 = 0
-t_vdsat = 0
+t_vt0 = 0.22
+t_kprime = 0.00016
 
 global min_kprime
 global min_lambda
 global min_vt0
 global min_vdsat
 
-while t_vt0 < 1:
-    t_vdsat = 0
-    while t_vdsat < 1:
-        t_lambda = 0
-        while t_lambda < 1:
+while t_vt0 < 0.24:
+    t_vdsat = 0.45
+    while t_vdsat < 0.48:
+        t_lambda = 0.2
+        while t_lambda < 0.250:
             i = 1
-            error = 0
             globalerror = []
+            globalerror.clear()
             while i < len(arr):
                 vd = arr[i][0]
+                error = 0
+                # print("nmosid ", nmosid(vd, 0.6, t_vt0, t_vdsat, t_kprime, t_lambda), "arr[", i, "][1]", arr[i][1], "error ", error)
                 error += abs(nmosid(vd, 0.6, t_vt0, t_vdsat, t_kprime, t_lambda) - arr[i][1])
+                # print("nmosid ", nmosid(vd, 0.9, t_vt0, t_vdsat, t_kprime, t_lambda), "arr[", i, "][1]", arr[i][1], "error ", error)
                 error += abs(nmosid(vd, 0.9, t_vt0, t_vdsat, t_kprime, t_lambda) - arr[i][2])
+                # print("nmosid ", nmosid(vd, 1.2, t_vt0, t_vdsat, t_kprime, t_lambda), "arr[", i, "][1]", arr[i][1], "error ", error)
                 error += abs(nmosid(vd, 1.2, t_vt0, t_vdsat, t_kprime, t_lambda) - arr[i][3])
+                # print("nmosid ", nmosid(vd, 1.5, t_vt0, t_vdsat, t_kprime, t_lambda), "arr[", i, "][1]", arr[i][1], "error ", error)
                 error += abs(nmosid(vd, 1.5, t_vt0, t_vdsat, t_kprime, t_lambda) - arr[i][4])
+                # print("nmosid ", nmosid(vd, 1.8, t_vt0, t_vdsat, t_kprime, t_lambda), "arr[", i, "][1]", arr[i][1], "error ", error)
                 error += abs(nmosid(vd, 1.8, t_vt0, t_vdsat, t_kprime, t_lambda) - arr[i][5])
+                # print("nmosid ", nmosid(vd, 1.8, t_vt0, t_vdsat, t_kprime, t_lambda), "arr[", i, "][1]", arr[i][1], "error ", error)
                 i += 1
-                globalerror.append(error) 
+                # print(error)
+                globalerror.append(error)
+                #print(sum(globalerror), t_vt0, t_vdsat, t_lambda)
+            # print(sum(globalerror), t_vt0, t_vdsat, t_lambda)
+            # print(sum(globalerror))
+            #print(globalerror)
             
-            print(sum(globalerror))
-            
-            # if(error < min_error):
-            #     min_kprime = t_kprime
-            #     min_lambda = t_lambda
-            #     min_vt0 = t_vt0
-            #     min_vdsat = t_vdsat
-            #     min_error = error
-            #print(t_vt0, t_vdsat, t_lambda)
-            t_lambda += 0.1
-        t_vdsat += 0.1
-    t_vt0 += 0.1
+            if(sum(globalerror) < min_error):
+                min_kprime = t_kprime
+                min_lambda = t_lambda
+                min_vt0 = t_vt0
+                min_vdsat = t_vdsat
+                min_error = sum(globalerror)
+                print("min_kprime", min_kprime, "min_lambda", min_lambda,"min_vt0", min_vt0,"min_vdsat", min_vdsat,"min_error", min_error)
+            t_lambda += 0.001
+        t_vdsat += 0.001
+    t_vt0 += 0.001
 
-print("min_kprime ", min_kprime, "\nmin_kprime", min_lambda, "\nmin_kprime", min_vt0, "\nmin_kprime", min_vdsat)
+print("min_kprime ", min_kprime, "\nmin_lambda", min_lambda, "\nmin_vt0", min_vt0, "\nmin_vdsat", min_vdsat)
 
 # vd = arr[i][0]
 # row = np.array([vd, nmosid(vd, 0.6), nmosid(vd, 0.9), nmosid(vd, 1.2), nmosid(vd, 1.5), nmosid(vd, 1.8)])
