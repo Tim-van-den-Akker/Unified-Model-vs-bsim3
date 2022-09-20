@@ -60,6 +60,9 @@ while i < length:
     arr = np.vstack([arr, row])
     i += 1
 
+global min_error 
+min_error = 9999999999
+global error
 t_kprime = 0
 t_lambda = 15e-4
 t_vt0 = 0
@@ -76,41 +79,26 @@ while t_vt0 < 1:
         t_lambda = 0
         while t_lambda < 1:
             i = 1
-            unified6 = np.array([0, 0])
-            unified9 = np.array([0, 0])
-            unified12 = np.array([0, 0])
-            unified15 = np.array([0, 0])
-            unified18 = np.array([0, 0])
-
+            error = 0
+            globalerror = []
             while i < len(arr):
                 vd = arr[i][0]
-                row1 = np.array([vd, nmosid(vd, 0.6, t_vt0, t_vdsat, t_kprime, t_lambda)])
-                row2 = np.array([vd, nmosid(vd, 0.9, t_vt0, t_vdsat, t_kprime, t_lambda)])
-                row3 = np.array([vd, nmosid(vd, 1.2, t_vt0, t_vdsat, t_kprime, t_lambda)])
-                row4 = np.array([vd, nmosid(vd, 1.5, t_vt0, t_vdsat, t_kprime, t_lambda)])
-                row5 = np.array([vd, nmosid(vd, 1.8, t_vt0, t_vdsat, t_kprime, t_lambda)])
-                unified6 = np.vstack([unified6, row1])
-                unified9 = np.vstack([unified9, row2])
-                unified12 = np.vstack([unified12, row3])
-                unified15 = np.vstack([unified15, row4])
-                unified18 = np.vstack([unified18, row5])
-
+                error += abs(nmosid(vd, 0.6, t_vt0, t_vdsat, t_kprime, t_lambda) - arr[i][1])
+                error += abs(nmosid(vd, 0.9, t_vt0, t_vdsat, t_kprime, t_lambda) - arr[i][2])
+                error += abs(nmosid(vd, 1.2, t_vt0, t_vdsat, t_kprime, t_lambda) - arr[i][3])
+                error += abs(nmosid(vd, 1.5, t_vt0, t_vdsat, t_kprime, t_lambda) - arr[i][4])
+                error += abs(nmosid(vd, 1.8, t_vt0, t_vdsat, t_kprime, t_lambda) - arr[i][5])
                 i += 1
-            while i < len(arr):
-                error6 = abs(unified6[i][1] - arr[i][1])
-                error9 = abs(unified9[i][1] - arr[i][2])
-                error12 = abs(unified12[i][1] - arr[i][3])
-                error15 = abs(unified15[i][1] - arr[i][4])
-                error18 = abs(unified18[i][1] - arr[i][5])
+                globalerror.append(error) 
             
-            error = error6 + error9 + error12 + error15 + error18
-
-            if(error < min_error):
-                min_kprime = t_kprime
-                min_lambda = t_lambda
-                min_vt0 = t_vt0
-                min_vdsat = t_vdsat
-                min_error = error
+            print(sum(globalerror))
+            
+            # if(error < min_error):
+            #     min_kprime = t_kprime
+            #     min_lambda = t_lambda
+            #     min_vt0 = t_vt0
+            #     min_vdsat = t_vdsat
+            #     min_error = error
             #print(t_vt0, t_vdsat, t_lambda)
             t_lambda += 0.1
         t_vdsat += 0.1
