@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from math import sqrt
 
-def nmosid(vd, vg, vt0 = 0.43, vdsat = 0.63, kprime = 115e-4, lmbda = 0.06):
+def nmosid(vd, vg, vt0, vdsat, kprime, lmbda):
 
     dl = 0
     dw = 0
@@ -60,28 +60,84 @@ while i < length:
     arr = np.vstack([arr, row])
     i += 1
 
-i = 0
-while i < len(arr):
-    vd = arr[i][0]
-    row = np.array([vd, nmosid(vd, 0.6), nmosid(vd, 0.9), nmosid(vd, 1.2), nmosid(vd, 1.5), nmosid(vd, 1.8)])
-    unifiedarr = np.vstack([unifiedarr, row])
-    i += 1
+t_kprime = 0
+t_lambda = 15e-4
+t_vt0 = 0
+t_vdsat = 0
+
+global min_kprime
+global min_lambda
+global min_vt0
+global min_vdsat
+
+while t_vt0 < 1:
+    t_vdsat = 0
+    while t_vdsat < 1:
+        t_lambda = 0
+        while t_lambda < 1:
+            i = 1
+            unified6 = np.array([0, 0])
+            unified9 = np.array([0, 0])
+            unified12 = np.array([0, 0])
+            unified15 = np.array([0, 0])
+            unified18 = np.array([0, 0])
+
+            while i < len(arr):
+                vd = arr[i][0]
+                row1 = np.array([vd, nmosid(vd, 0.6, t_vt0, t_vdsat, t_kprime, t_lambda)])
+                row2 = np.array([vd, nmosid(vd, 0.9, t_vt0, t_vdsat, t_kprime, t_lambda)])
+                row3 = np.array([vd, nmosid(vd, 1.2, t_vt0, t_vdsat, t_kprime, t_lambda)])
+                row4 = np.array([vd, nmosid(vd, 1.5, t_vt0, t_vdsat, t_kprime, t_lambda)])
+                row5 = np.array([vd, nmosid(vd, 1.8, t_vt0, t_vdsat, t_kprime, t_lambda)])
+                unified6 = np.vstack([unified6, row1])
+                unified9 = np.vstack([unified9, row2])
+                unified12 = np.vstack([unified12, row3])
+                unified15 = np.vstack([unified15, row4])
+                unified18 = np.vstack([unified18, row5])
+
+                i += 1
+            while i < len(arr):
+                error6 = abs(unified6[i][1] - arr[i][1])
+                error9 = abs(unified9[i][1] - arr[i][2])
+                error12 = abs(unified12[i][1] - arr[i][3])
+                error15 = abs(unified15[i][1] - arr[i][4])
+                error18 = abs(unified18[i][1] - arr[i][5])
+            
+            error = error6 + error9 + error12 + error15 + error18
+
+            if(error < min_error):
+                min_kprime = t_kprime
+                min_lambda = t_lambda
+                min_vt0 = t_vt0
+                min_vdsat = t_vdsat
+                min_error = error
+            #print(t_vt0, t_vdsat, t_lambda)
+            t_lambda += 0.1
+        t_vdsat += 0.1
+    t_vt0 += 0.1
+
+print("min_kprime ", min_kprime, "\nmin_kprime", min_lambda, "\nmin_kprime", min_vt0, "\nmin_kprime", min_vdsat)
+
+# vd = arr[i][0]
+# row = np.array([vd, nmosid(vd, 0.6), nmosid(vd, 0.9), nmosid(vd, 1.2), nmosid(vd, 1.5), nmosid(vd, 1.8)])
+# unifiedarr = np.vstack([unifiedarr, row])
 
 
+# plot = unifiedarr.transpose()
+# plot = plot * 1000
+# plot[0] = plot[0] / 1000
 
-plot = unifiedarr.transpose()
-plot = plot * 1000
-plot[0] = plot[0] / 1000
 
-
-plt.plot (plot[0], plot[1])
-plt.plot (plot[0], plot[2])
-plt.plot (plot[0], plot[3])
-plt.plot (plot[0], plot[4])
-plt.plot (plot[0], plot[5])
-plt.title('$I_d$ against $V_{ds}$ unified model')
-plt.xlabel('$V_{ds}$ (V)')
-plt.ylabel('$I_d$ (mA)')
-plt.savefig("Id against Vds unified model.png", dpi=600)
-plt.show()
-exit()
+# plt.plot (plot[0], plot[1])
+# plt.plot (plot[0], plot[2])
+# plt.plot (plot[0], plot[3])
+# plt.plot (plot[0], plot[4])
+# plt.plot (plot[0], plot[5])
+# plt.title('$I_d$ against $V_{ds}$ unified model')
+# plt.xlabel('$V_{ds}$ (V)')
+# plt.ylabel('$I_d$ (mA)')
+# plt.xlim(0,1.8)
+# plt.ylim(0, 1.5)
+# plt.savefig("Id against Vds unified model.png", dpi=600)
+# plt.show()
+# exit()
